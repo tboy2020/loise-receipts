@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loise Derival &mdash; Receipts &amp; Deposits</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --garden:#243c30;      /* deep garden green */
+    --garden-soft:#3a5a49;
+    --rose:#b56576;        /* dusty rose accent */
+    --rose-soft:#e8c9cf;
+    --brass:#a9854e;       /* brass hairline */
+    --paper:#faf5ef;       /* warm ivory */
+    --paper-2:#f2ebe1;
+    --ink:#22201d;
+    --muted:#6f6a62;
+    --line:#ded4c6;
+    --ok:#2f7a55;
+    --warn:#b07a1e;
+    --due:#b04a4a;
+    --shadow:0 10px 30px rgba(36,60,48,.10);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:'Inter',system-ui,sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(1200px 500px at 100% -10%, #eef3ec 0%, transparent 60%),
+      var(--paper);
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:920px;margin:0 auto;padding:0 18px 80px}
+
+  /* Masthead */
+  header.mast{padding:30px 18px 18px;max-width:920px;margin:0 auto}
+  .mast-row{display:flex;align-items:center;gap:14px}
+  .sprig{flex:0 0 auto}
+  .mast h1{
+    font-family:'Fraunces',serif;font-optical-sizing:auto;
+    font-weight:600;font-size:30px;line-height:1;margin:0;color:var(--garden);
+    letter-spacing:.2px;
+  }
+  .mast .sub{margin:6px 0 0;color:var(--muted);font-size:13.5px;font-style:italic;font-family:'Fraunces',serif}
+  .rule{height:1px;background:linear-gradient(90deg,transparent,var(--brass),transparent);margin:16px auto 0;max-width:920px}
+
+  /* Tabs */
+  nav.tabs{display:flex;gap:6px;margin:18px 0 22px;flex-wrap:wrap}
+  .tab{
+    font-family:'Inter';font-weight:600;font-size:14px;letter-spacing:.2px;
+    padding:9px 16px;border-radius:999px;border:1px solid var(--line);
+    background:#fff;color:var(--garden);cursor:pointer;transition:.15s;
+  }
+  .tab:hover{border-color:var(--brass)}
+  .tab.active{background:var(--garden);color:#fff;border-color:var(--garden)}
+
+  /* Cards */
+  .card{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:20px}
+  .card + .card{margin-top:16px}
+
+  h2.sec{font-family:'Fraunces',serif;font-weight:600;color:var(--garden);font-size:20px;margin:2px 0 14px}
+  .hint{color:var(--muted);font-size:13px;margin:-6px 0 16px}
+
+  label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin:0 0 6px}
+  input,select,textarea{
+    width:100%;font-family:'Inter';font-size:15px;color:var(--ink);
+    padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;
+  }
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--rose-soft);border-color:var(--rose)}
+  textarea{resize:vertical;min-height:64px}
+  .grid{display:grid;gap:14px}
+  .g2{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:1fr 1fr 1fr}
+  @media(max-width:620px){.g2,.g3{grid-template-columns:1fr}}
+  .field{margin-bottom:0}
+
+  /* Line items */
+  .items{margin-top:6px}
+  .item-head,.item-row{display:grid;grid-template-columns:1fr 70px 110px 110px 34px;gap:8px;align-items:center}
+  .item-head{font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:600;padding:0 2px 6px}
+  .item-row{margin-bottom:8px}
+  .item-row input{padding:9px 10px}
+  .li-amt{font-variant-numeric:tabular-nums;text-align:right;font-weight:600;color:var(--garden);padding-right:4px}
+  .del{border:1px solid var(--line);background:#fff;color:var(--due);border-radius:9px;height:38px;cursor:pointer;font-size:16px;line-height:1}
+  .del:hover{background:#fdecec;border-color:var(--due)}
+  @media(max-width:620px){
+    .item-head{display:none}
+    .item-row{grid-template-columns:1fr 60px 90px 34px;grid-template-areas:"d d d x" "q p a a"}
+    .item-row .i-desc{grid-area:d}.item-row .i-qty{grid-area:q}.item-row .i-price{grid-area:p}.item-row .li-amt{grid-area:a}.item-row .del{grid-area:x}
+  }
+
+  .quick{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+  .chip{border:1px solid var(--line);background:var(--paper-2);color:var(--garden);font-weight:600;font-size:13px;padding:7px 13px;border-radius:999px;cursor:pointer}
+  .chip:hover{border-color:var(--rose);background:#fff}
+
+  .btn{font-family:'Inter';font-weight:600;font-size:14.5px;border-radius:11px;border:1px solid var(--garden);background:var(--garden);color:#fff;padding:11px 20px;cursor:pointer;transition:.15s}
+  .btn:hover{background:var(--garden-soft)}
+  .btn.ghost{background:#fff;color:var(--garden)}
+  .btn.ghost:hover{border-color:var(--brass);background:var(--paper-2)}
+  .btn.rose{background:var(--rose);border-color:var(--rose)}
+  .btn.rose:hover{background:#a3596a}
+  .btn.sm{padding:8px 14px;font-size:13.5px}
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+
+  .totals{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+  .trow{display:flex;justify-content:space-between;padding:4px 0;font-size:14.5px;color:var(--muted)}
+  .trow.total{color:var(--garden);font-weight:700;font-size:18px;border-top:1px solid var(--line);margin-top:6px;padding-top:10px}
+  .trow.bal{color:var(--due);font-weight:700;font-size:16px}
+  .trow.paidfull{color:var(--ok)}
+  .tnum{font-variant-numeric:tabular-nums}
+
+  /* Jobs list */
+  .toolbar{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+  .toolbar input{max-width:280px}
+  .toolbar select{max-width:180px}
+  .job{display:flex;align-items:center;gap:14px;padding:14px 4px;border-bottom:1px solid var(--line);cursor:pointer}
+  .job:last-child{border-bottom:0}
+  .job:hover{background:var(--paper-2)}
+  .job .jmain{flex:1;min-width:0}
+  .job .jname{font-weight:600;color:var(--garden);font-size:15.5px}
+  .job .jmeta{color:var(--muted);font-size:12.5px;margin-top:2px}
+  .job .jnums{text-align:right;font-variant-numeric:tabular-nums}
+  .job .jtotal{font-weight:700;color:var(--ink)}
+  .job .jbal{font-size:12.5px;margin-top:2px}
+  .badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;padding:3px 9px;border-radius:999px;white-space:nowrap}
+  .b-unpaid{background:#fbe9e9;color:var(--due)}
+  .b-deposit{background:#fbf1dc;color:var(--warn)}
+  .b-paid{background:#e2f2ea;color:var(--ok)}
+  .empty{text-align:center;color:var(--muted);padding:40px 10px;font-style:italic;font-family:'Fraunces',serif}
+
+  /* Modal */
+  .scrim{position:fixed;inset:0;background:rgba(30,40,34,.55);display:none;align-items:flex-start;justify-content:center;padding:24px 14px;overflow:auto;z-index:50}
+  .scrim.on{display:flex}
+  .modal{background:#fff;max-width:720px;width:100%;border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,.3);overflow:hidden}
+  .modal-bar{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line);background:var(--paper-2)}
+  .modal-bar h3{margin:0;font-family:'Fraunces',serif;color:var(--garden);font-size:18px}
+  .x{border:none;background:none;font-size:22px;cursor:pointer;color:var(--muted);line-height:1}
+  .modal-body{padding:20px}
+
+  /* Receipt document */
+  .receipt{background:#fff;color:var(--ink)}
+  .r-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:2px solid var(--garden);padding-bottom:14px}
+  .r-biz{font-family:'Fraunces',serif;font-weight:600;color:var(--garden);font-size:24px;line-height:1.05}
+  .r-owner{color:var(--muted);font-size:12.5px;margin-top:6px;line-height:1.5}
+  .r-meta{text-align:right;font-size:13px;color:var(--muted);white-space:nowrap}
+  .r-meta .word{font-family:'Fraunces',serif;font-size:20px;color:var(--garden);letter-spacing:2px;text-transform:uppercase}
+  .r-parties{display:flex;justify-content:space-between;gap:20px;margin:16px 0}
+  .r-parties .blk{font-size:13.5px;line-height:1.6}
+  .r-parties .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--rose);font-weight:700;margin-bottom:3px}
+  table.r-items{width:100%;border-collapse:collapse;margin-top:6px;font-size:13.5px}
+  table.r-items th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);border-bottom:1px solid var(--line);padding:6px 4px}
+  table.r-items td{padding:8px 4px;border-bottom:1px solid var(--paper-2);vertical-align:top}
+  table.r-items .num{text-align:right;font-variant-numeric:tabular-nums}
+  .r-tot{margin-top:12px;margin-left:auto;width:280px}
+  .r-tot .row{display:flex;justify-content:space-between;padding:3px 0;font-size:13.5px;color:var(--muted)}
+  .r-tot .row.tot{color:var(--garden);font-weight:700;font-size:16px;border-top:1px solid var(--garden);margin-top:4px;padding-top:8px}
+  .r-tot .row.due{color:var(--due);font-weight:700;font-size:15px}
+  .r-tot .row.settled{color:var(--ok);font-weight:700}
+  .r-pay{margin-top:16px}
+  .r-pay .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--rose);font-weight:700;margin-bottom:6px}
+  .r-pay table{width:100%;border-collapse:collapse;font-size:12.5px}
+  .r-pay td{padding:4px 4px;border-bottom:1px solid var(--paper-2)}
+  .r-foot{margin-top:20px;border-top:1px solid var(--line);padding-top:12px;text-align:center}
+  .r-foot .ty{font-family:'Fraunces',serif;font-style:italic;color:var(--garden);font-size:15px}
+  .r-foot .note{color:var(--muted);font-size:11.5px;margin-top:5px}
+  .stamp{display:inline-block;border:2px solid var(--ok);color:var(--ok);font-weight:800;letter-spacing:2px;text-transform:uppercase;padding:4px 12px;border-radius:6px;transform:rotate(-6deg);font-size:14px;margin-top:6px}
+
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--garden);color:#fff;padding:12px 22px;border-radius:999px;font-weight:600;font-size:14px;box-shadow:var(--shadow);opacity:0;transition:.25s;z-index:99;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  @media print{
+    body{background:#fff}
+    header.mast,nav.tabs,.rule,.no-print,.toast{display:none !important}
+    .wrap{padding:0;max-width:none}
+    .scrim{position:static;background:none;display:block;padding:0;overflow:visible}
+    .modal{box-shadow:none;max-width:none;border-radius:0}
+    .modal-bar{display:none}
+    .modal-body{padding:0}
+    #view-jobs,#view-new,#view-settings{display:none !important}
+  }
+</style>
+</head>
+<body>
+
+<header class="mast">
+  <div class="mast-row">
+    <svg class="sprig" width="34" height="40" viewBox="0 0 34 40" fill="none" aria-hidden="true">
+      <path d="M17 39V13" stroke="#3a5a49" stroke-width="2" stroke-linecap="round"/>
+      <path d="M17 22C17 22 9 20 6 13C13 12 17 18 17 22Z" fill="#b56576"/>
+      <path d="M17 30C17 30 25 28 28 21C21 20 17 26 17 30Z" fill="#e8c9cf"/>
+      <circle cx="17" cy="9" r="6" fill="#b56576"/>
+      <circle cx="17" cy="9" r="2.4" fill="#faf5ef"/>
+    </svg>
+    <div>
+      <h1 id="mast-name">Loise Derival</h1>
+      <p class="sub" id="mast-tag">Catering &middot; Florals &middot; Event Styling</p>
+    </div>
+  </div>
+</header>
+<div class="rule"></div>
+
+<div class="wrap">
+  <nav class="tabs">
+    <button class="tab active" data-view="jobs" onclick="go('jobs')">Jobs</button>
+    <button class="tab" data-view="new" onclick="newJob()">New job</button>
+    <button class="tab" data-view="settings" onclick="go('settings')">Business info</button>
+  </nav>
+
+  <!-- JOBS LIST -->
+  <section id="view-jobs">
+    <div class="card">
+      <h2 class="sec">Your jobs</h2>
+      <div class="toolbar">
+        <input id="search" placeholder="Search client or event&hellip;" oninput="renderJobs()">
+        <select id="filter" onchange="renderJobs()">
+          <option value="all">All statuses</option>
+          <option value="Unpaid">Unpaid</option>
+          <option value="Deposit paid">Deposit paid</option>
+          <option value="Paid in full">Paid in full</option>
+        </select>
+      </div>
+      <div id="jobs-list"></div>
+    </div>
+  </section>
+
+  <!-- NEW / EDIT JOB -->
+  <section id="view-new" style="display:none">
+    <div class="card">
+      <h2 class="sec" id="form-title">New job</h2>
+      <p class="hint">Fill in the client and what you&rsquo;re providing. Record the deposit now &mdash; the balance can be added when the job is done.</p>
+
+      <div class="grid g2">
+        <div class="field"><label>Client name</label><input id="c-name" placeholder="e.g. Marie Joseph"></div>
+        <div class="field"><label>Phone</label><input id="c-phone" placeholder="(614) 555&mdash;0100"></div>
+      </div>
+      <div class="grid g3" style="margin-top:14px">
+        <div class="field"><label>Email</label><input id="c-email" placeholder="optional"></div>
+        <div class="field"><label>Event type</label>
+          <select id="c-type">
+            <option>Birthday</option><option>Proposal</option><option>Wedding</option>
+            <option>Catering</option><option>Flower order</option><option>Other</option>
+          </select>
+        </div>
+        <div class="field"><label>Event date</label><input id="c-date" type="date"></div>
+      </div>
+
+      <div class="quick">
+        <span style="align-self:center;color:var(--muted);font-size:12.5px;font-weight:600">Quick add:</span>
+        <button class="chip" onclick="quickItem('Catering service')">Catering</button>
+        <button class="chip" onclick="quickItem('Flower bouquet')">Flower bouquet</button>
+        <button class="chip" onclick="quickItem('Floral arrangement')">Floral arrangement</button>
+        <button class="chip" onclick="quickItem('Event decoration')">Event decoration</button>
+        <button class="chip" onclick="quickItem('Delivery &amp; setup')">Delivery &amp; setup</button>
+      </div>
+
+      <div class="items">
+        <div class="item-head"><div>Description</div><div>Qty</div><div>Unit price</div><div style="text-align:right">Amount</div><div></div></div>
+        <div id="item-rows"></div>
+        <button class="btn ghost sm" onclick="addItem()" style="margin-top:4px">+ Add line</button>
+      </div>
+
+      <div class="grid g2" style="margin-top:18px">
+        <div class="field"><label>Discount (optional)</label><input id="c-disc" type="number" min="0" step="0.01" placeholder="0.00" oninput="recalc()"></div>
+        <div class="field"><label>Tax rate % (optional)</label><input id="c-tax" type="number" min="0" step="0.01" placeholder="0" oninput="recalc()"></div>
+      </div>
+
+      <div class="totals" id="form-totals"></div>
+
+      <h2 class="sec" style="margin-top:22px">Deposit received</h2>
+      <div class="grid g3">
+        <div class="field"><label>Amount</label><input id="d-amt" type="number" min="0" step="0.01" placeholder="0.00" oninput="recalc()"></div>
+        <div class="field"><label>Date</label><input id="d-date" type="date"></div>
+        <div class="field"><label>Method</label>
+          <select id="d-method"><option>Cash</option><option>Zelle</option><option>CashApp</option><option>Card</option><option>Check</option><option>Other</option></select>
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:14px"><label>Notes (optional)</label><textarea id="c-notes" placeholder="Colors, delivery address, special requests&hellip;"></textarea></div>
+
+      <div class="btn-row">
+        <button class="btn" onclick="saveJob()">Save job</button>
+        <button class="btn ghost" onclick="go('jobs')">Cancel</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section id="view-settings" style="display:none">
+    <div class="card">
+      <h2 class="sec">Business info</h2>
+      <p class="hint">This appears at the top of every receipt.</p>
+      <div class="grid g2">
+        <div class="field"><label>Business name</label><input id="s-biz"></div>
+        <div class="field"><label>Owner name</label><input id="s-owner"></div>
+      </div>
+      <div class="grid g2" style="margin-top:14px">
+        <div class="field"><label>Phone</label><input id="s-phone"></div>
+        <div class="field"><label>Email</label><input id="s-email"></div>
+      </div>
+      <div class="field" style="margin-top:14px"><label>Address</label><input id="s-addr"></div>
+      <div class="field" style="margin-top:14px"><label>Tagline (under the name)</label><input id="s-tag"></div>
+      <div class="grid g3" style="margin-top:14px">
+        <div class="field"><label>Currency symbol</label><input id="s-cur"></div>
+        <div class="field"><label>Receipt prefix</label><input id="s-prefix"></div>
+        <div class="field"><label>Next receipt no.</label><input id="s-next" type="number" min="1"></div>
+      </div>
+      <div class="field" style="margin-top:14px"><label>Thank-you message</label><input id="s-ty"></div>
+      <div class="field" style="margin-top:14px"><label>Footer note</label><input id="s-note"></div>
+      <div class="btn-row">
+        <button class="btn" onclick="saveProfile()">Save business info</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- MODAL -->
+<div class="scrim" id="scrim">
+  <div class="modal">
+    <div class="modal-bar no-print">
+      <h3 id="modal-title">Receipt</h3>
+      <button class="x" onclick="closeModal()" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- storage helpers ---------- */
+function load(k, def){ try{ var v=localStorage.getItem(k); return v?JSON.parse(v):def; }catch(e){ return def; } }
+function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+
+var DEFAULT_PROFILE = {
+  biz:'Loise Derival', owner:'Loise Derival', phone:'', email:'', addr:'',
+  tag:'Catering \u00b7 Florals \u00b7 Event Styling',
+  cur:'$', prefix:'LD-', next:1,
+  ty:'Thank you for letting us be part of your celebration!',
+  note:'Balance is due upon completion of the job. All sales final.'
+};
+
+var profile = load('ld_profile', null) || DEFAULT_PROFILE;
+var jobs = load('ld_jobs', []);
+var editingId = null;
+
+/* ---------- utils ---------- */
+function esc(s){ s=(s==null?'':''+s); return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function num(v){ var n=parseFloat(v); return isNaN(n)?0:n; }
+function money(n){
+  var neg=n<0; n=Math.abs(n);
+  var s=n.toFixed(2);
+  var parts=s.split('.');
+  parts[0]=parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  return (neg?'-':'')+profile.cur+parts[0]+'.'+parts[1];
+}
+function todayISO(){ var d=new Date(); var m=(''+(d.getMonth()+1)); var day=(''+d.getDate()); if(m.length<2)m='0'+m; if(day.length<2)day='0'+day; return d.getFullYear()+'-'+m+'-'+day; }
+function prettyDate(iso){ if(!iso) return ''; var p=(''+iso).split('-'); if(p.length!==3) return iso; var mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return mo[parseInt(p[1],10)-1]+' '+parseInt(p[2],10)+', '+p[0]; }
+
+function toast(msg){ var t=document.getElementById('toast'); t.textContent=msg; t.className='toast show'; setTimeout(function(){ t.className='toast'; },2200); }
+
+/* ---------- totals math ---------- */
+function computeTotals(items, disc, taxRate, payments){
+  var sub=0, i;
+  for(i=0;i<items.length;i++){ sub += num(items[i].qty)*num(items[i].price); }
+  disc=num(disc); taxRate=num(taxRate);
+  var taxable=sub-disc; if(taxable<0)taxable=0;
+  var tax=taxable*(taxRate/100);
+  var total=sub-disc+tax;
+  var paid=0;
+  if(payments){ for(i=0;i<payments.length;i++){ paid+=num(payments[i].amount); } }
+  var bal=total-paid;
+  return { sub:sub, disc:disc, tax:tax, total:total, paid:paid, bal:bal };
+}
+function statusOf(t){
+  if(t.paid<=0) return 'Unpaid';
+  if(t.bal>0.001) return 'Deposit paid';
+  return 'Paid in full';
+}
+
+/* ---------- navigation ---------- */
+function go(view){
+  document.getElementById('view-jobs').style.display = view==='jobs'?'':'none';
+  document.getElementById('view-new').style.display = view==='new'?'':'none';
+  document.getElementById('view-settings').style.display = view==='settings'?'':'none';
+  var tabs=document.querySelectorAll('.tab'); for(var i=0;i<tabs.length;i++){ tabs[i].className = tabs[i].getAttribute('data-view')===view?'tab active':'tab'; }
+  if(view==='jobs') renderJobs();
+  if(view==='settings') fillSettings();
+  window.scrollTo(0,0);
+}
+
+/* ---------- new / edit job form ---------- */
+function newJob(){ editingId=null; document.getElementById('form-title').textContent='New job'; clearForm(); go('new'); }
+
+function clearForm(){
+  var ids=['c-name','c-phone','c-email','c-disc','c-tax','d-amt','c-notes'];
+  for(var i=0;i<ids.length;i++){ document.getElementById(ids[i]).value=''; }
+  document.getElementById('c-type').value='Birthday';
+  document.getElementById('c-date').value='';
+  document.getElementById('d-date').value=todayISO();
+  document.getElementById('d-method').value='Cash';
+  document.getElementById('item-rows').innerHTML='';
+  addItem();
+  recalc();
+}
+
+function addItem(desc, qty, price){
+  var wrap=document.getElementById('item-rows');
+  var row=document.createElement('div');
+  row.className='item-row';
+  row.innerHTML =
+    '<input class="i-desc" placeholder="Description" value="'+esc(desc||'')+'">'+
+    '<input class="i-qty" type="number" min="0" step="1" placeholder="1" value="'+(qty!=null?esc(qty):'1')+'">'+
+    '<input class="i-price" type="number" min="0" step="0.01" placeholder="0.00" value="'+(price!=null?esc(price):'')+'">'+
+    '<div class="li-amt">'+money(0)+'</div>'+
+    '<button class="del" title="Remove" onclick="this.parentNode.parentNode.removeChild(this.parentNode);recalc();">&times;</button>';
+  wrap.appendChild(row);
+  var ins=row.querySelectorAll('input');
+  for(var i=0;i<ins.length;i++){ ins[i].addEventListener('input', recalc); }
+  recalc();
+}
+function quickItem(name){ addItem(name, 1, ''); var rows=document.querySelectorAll('#item-rows .item-row'); var last=rows[rows.length-1]; last.querySelector('.i-price').focus(); }
+
+function readForm(){
+  var rows=document.querySelectorAll('#item-rows .item-row');
+  var items=[]; var i;
+  for(i=0;i<rows.length;i++){
+    var d=rows[i].querySelector('.i-desc').value.trim();
+    var q=rows[i].querySelector('.i-qty').value;
+    var p=rows[i].querySelector('.i-price').value;
+    if(d==='' && !p) continue;
+    items.push({ desc:d, qty:num(q)||1, price:num(p) });
+  }
+  return {
+    client:{ name:document.getElementById('c-name').value.trim(), phone:document.getElementById('c-phone').value.trim(), email:document.getElementById('c-email').value.trim() },
+    eventType:document.getElementById('c-type').value,
+    eventDate:document.getElementById('c-date').value,
+    items:items,
+    disc:num(document.getElementById('c-disc').value),
+    taxRate:num(document.getElementById('c-tax').value),
+    notes:document.getElementById('c-notes').value.trim(),
+    dep:{ amt:num(document.getElementById('d-amt').value), date:document.getElementById('d-date').value, method:document.getElementById('d-method').value }
+  };
+}
+
+function recalc(){
+  var f=readForm();
+  var rows=document.querySelectorAll('#item-rows .item-row');
+  var idx=0, i;
+  for(i=0;i<rows.length;i++){
+    var d=rows[i].querySelector('.i-desc').value.trim();
+    var p=rows[i].querySelector('.i-price').value;
+    var amtEl=rows[i].querySelector('.li-amt');
+    if(d==='' && !p){ amtEl.textContent=money(0); continue; }
+    var it=f.items[idx]||{qty:0,price:0}; idx++;
+    amtEl.textContent=money(num(it.qty)*num(it.price));
+  }
+  var t=computeTotals(f.items, f.disc, f.taxRate, [{amount:f.dep.amt}]);
+  var html='';
+  html+='<div class="trow"><span>Subtotal</span><span class="tnum">'+money(t.sub)+'</span></div>';
+  if(t.disc>0) html+='<div class="trow"><span>Discount</span><span class="tnum">-'+money(t.disc)+'</span></div>';
+  if(t.tax>0) html+='<div class="trow"><span>Tax</span><span class="tnum">'+money(t.tax)+'</span></div>';
+  html+='<div class="trow total"><span>Total</span><span class="tnum">'+money(t.total)+'</span></div>';
+  if(f.dep.amt>0){
+    html+='<div class="trow"><span>Deposit</span><span class="tnum">-'+money(f.dep.amt)+'</span></div>';
+    var bal=t.total-f.dep.amt;
+    html+='<div class="trow '+(bal>0.001?'bal':'paidfull')+'"><span>'+(bal>0.001?'Balance due':'Paid in full')+'</span><span class="tnum">'+money(bal>0?bal:0)+'</span></div>';
+  }
+  document.getElementById('form-totals').innerHTML=html;
+}
+
+function saveJob(){
+  var f=readForm();
+  if(f.client.name===''){ toast('Add a client name first'); document.getElementById('c-name').focus(); return; }
+  if(f.items.length===0){ toast('Add at least one item'); return; }
+
+  var payments=[];
+  if(f.dep.amt>0){ payments.push({ type:'Deposit', amount:f.dep.amt, date:f.dep.date||todayISO(), method:f.dep.method }); }
+
+  if(editingId!=null){
+    for(var i=0;i<jobs.length;i++){ if(jobs[i].id===editingId){
+      var existing=jobs[i];
+      // keep any non-deposit payments already recorded (e.g. balance)
+      var keep=[]; for(var j=0;j<existing.payments.length;j++){ if(existing.payments[j].type!=='Deposit') keep.push(existing.payments[j]); }
+      existing.client=f.client; existing.eventType=f.eventType; existing.eventDate=f.eventDate;
+      existing.items=f.items; existing.disc=f.disc; existing.taxRate=f.taxRate; existing.notes=f.notes;
+      existing.payments=payments.concat(keep);
+      break;
+    }}
+    save('ld_jobs', jobs); toast('Job updated'); editingId=null;
+  } else {
+    var no=profile.prefix+padNo(profile.next);
+    jobs.unshift({ id:Date.now(), receiptNo:no, createdAt:todayISO(), client:f.client, eventType:f.eventType, eventDate:f.eventDate, items:f.items, disc:f.disc, taxRate:f.taxRate, notes:f.notes, payments:payments });
+    profile.next = profile.next+1; save('ld_profile', profile);
+    save('ld_jobs', jobs); toast('Job saved as '+no);
+  }
+  go('jobs');
+}
+function padNo(n){ var s=''+n; while(s.length<4) s='0'+s; return s; }
+
+/* ---------- edit ---------- */
+function editJob(id){
+  var job=findJob(id); if(!job) return;
+  editingId=id;
+  document.getElementById('form-title').textContent='Edit '+job.receiptNo;
+  document.getElementById('c-name').value=job.client.name;
+  document.getElementById('c-phone').value=job.client.phone;
+  document.getElementById('c-email').value=job.client.email;
+  document.getElementById('c-type').value=job.eventType;
+  document.getElementById('c-date').value=job.eventDate||'';
+  document.getElementById('c-disc').value=job.disc||'';
+  document.getElementById('c-tax').value=job.taxRate||'';
+  document.getElementById('c-notes').value=job.notes||'';
+  var dep=null; for(var i=0;i<job.payments.length;i++){ if(job.payments[i].type==='Deposit'){ dep=job.payments[i]; break; } }
+  document.getElementById('d-amt').value=dep?dep.amount:'';
+  document.getElementById('d-date').value=dep?dep.date:todayISO();
+  document.getElementById('d-method').value=dep?dep.method:'Cash';
+  document.getElementById('item-rows').innerHTML='';
+  for(i=0;i<job.items.length;i++){ addItem(job.items[i].desc, job.items[i].qty, job.items[i].price); }
+  recalc();
+  closeModal();
+  go('new');
+}
+
+function findJob(id){ for(var i=0;i<jobs.length;i++){ if(jobs[i].id===id) return jobs[i]; } return null; }
+
+/* ---------- jobs list ---------- */
+function renderJobs(){
+  var q=(document.getElementById('search').value||'').toLowerCase();
+  var filt=document.getElementById('filter').value;
+  var list=document.getElementById('jobs-list');
+  var html='', shown=0;
+  for(var i=0;i<jobs.length;i++){
+    var job=jobs[i];
+    var t=computeTotals(job.items, job.disc, job.taxRate, job.payments);
+    var st=statusOf(t);
+    if(filt!=='all' && st!==filt) continue;
+    var hay=(job.client.name+' '+job.eventType+' '+job.receiptNo).toLowerCase();
+    if(q && hay.indexOf(q)<0) continue;
+    shown++;
+    var badge = st==='Unpaid'?'b-unpaid':(st==='Deposit paid'?'b-deposit':'b-paid');
+    var balLine = st==='Paid in full'
+      ? '<div class="jbal" style="color:var(--ok)">Settled</div>'
+      : '<div class="jbal" style="color:var(--due)">'+money(t.bal)+' due</div>';
+    html+=''+
+      '<div class="job" onclick="openJob('+job.id+')">'+
+        '<div class="jmain">'+
+          '<div class="jname">'+esc(job.client.name)+' <span style="color:var(--muted);font-weight:400;font-size:13px">&middot; '+esc(job.receiptNo)+'</span></div>'+
+          '<div class="jmeta">'+esc(job.eventType)+(job.eventDate?' &middot; '+prettyDate(job.eventDate):'')+'</div>'+
+        '</div>'+
+        '<div class="jnums">'+
+          '<div class="jtotal">'+money(t.total)+'</div>'+ balLine +
+        '</div>'+
+        '<div><span class="badge '+badge+'">'+st+'</span></div>'+
+      '</div>';
+  }
+  if(shown===0){ html='<div class="empty">No jobs yet. Tap &ldquo;New job&rdquo; to create your first receipt.</div>'; }
+  list.innerHTML=html;
+}
+
+/* ---------- job detail modal ---------- */
+function openJob(id){
+  var job=findJob(id); if(!job) return;
+  var t=computeTotals(job.items, job.disc, job.taxRate, job.payments);
+  var st=statusOf(t);
+  document.getElementById('modal-title').textContent=job.receiptNo+' \u00b7 '+job.client.name;
+  var b='';
+  b+='<div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px">';
+  b+='<div style="font-size:14px;color:var(--muted)"><strong style="color:var(--garden)">'+esc(job.eventType)+'</strong>'+(job.eventDate?' &middot; '+prettyDate(job.eventDate):'')+'</div>';
+  b+='<div style="font-size:22px;font-weight:700;color:var(--garden)">'+money(t.total)+'</div>';
+  b+='</div>';
+
+  b+='<div style="background:var(--paper-2);border-radius:12px;padding:14px;margin-bottom:14px">';
+  b+='<div style="display:flex;justify-content:space-between;font-size:14px;padding:3px 0"><span style="color:var(--muted)">Paid so far</span><span style="font-weight:600">'+money(t.paid)+'</span></div>';
+  if(st==='Paid in full'){
+    b+='<div style="display:flex;justify-content:space-between;font-size:15px;padding:3px 0;color:var(--ok);font-weight:700"><span>Balance</span><span>Settled</span></div>';
+  } else {
+    b+='<div style="display:flex;justify-content:space-between;font-size:15px;padding:3px 0;color:var(--due);font-weight:700"><span>Balance due</span><span>'+money(t.bal)+'</span></div>';
+  }
+  b+='</div>';
+
+  // record balance section
+  if(st!=='Paid in full'){
+    b+='<div class="no-print" style="border:1px dashed var(--line);border-radius:12px;padding:14px;margin-bottom:14px">';
+    b+='<div style="font-weight:600;color:var(--garden);margin-bottom:10px">Record a payment</div>';
+    b+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">';
+    b+='<input id="pay-amt" type="number" min="0" step="0.01" placeholder="'+t.bal.toFixed(2)+'">';
+    b+='<input id="pay-date" type="date" value="'+todayISO()+'">';
+    b+='<select id="pay-method"><option>Cash</option><option>Zelle</option><option>CashApp</option><option>Card</option><option>Check</option><option>Other</option></select>';
+    b+='</div>';
+    b+='<div style="margin-top:10px;display:flex;gap:8px">';
+    b+='<button class="btn rose sm" onclick="recordPayment('+job.id+')">Add payment</button>';
+    b+='<button class="btn ghost sm" onclick="payFull('+job.id+','+t.bal+')">Mark balance paid</button>';
+    b+='</div></div>';
+  }
+
+  // payment history
+  if(job.payments.length){
+    b+='<div style="margin-bottom:14px"><div style="font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--rose);font-weight:700;margin-bottom:6px">Payments</div>';
+    for(var i=0;i<job.payments.length;i++){ var p=job.payments[i];
+      b+='<div style="display:flex;justify-content:space-between;font-size:13.5px;padding:5px 0;border-bottom:1px solid var(--paper-2)"><span>'+esc(p.type)+' &middot; '+prettyDate(p.date)+' &middot; '+esc(p.method)+'</span><span style="font-weight:600">'+money(p.amount)+'</span></div>';
+    }
+    b+='</div>';
+  }
+
+  if(job.notes){ b+='<div style="font-size:13.5px;color:var(--muted);margin-bottom:14px"><strong>Notes:</strong> '+esc(job.notes)+'</div>'; }
+
+  b+='<div class="no-print" style="display:flex;gap:8px;flex-wrap:wrap">';
+  b+='<button class="btn" onclick="showReceipt('+job.id+')">View receipt</button>';
+  b+='<button class="btn ghost" onclick="editJob('+job.id+')">Edit job</button>';
+  b+='<button class="btn ghost" onclick="deleteJob('+job.id+')" style="color:var(--due);border-color:var(--due)">Delete</button>';
+  b+='</div>';
+
+  document.getElementById('modal-body').innerHTML=b;
+  document.getElementById('scrim').className='scrim on';
+}
+
+function recordPayment(id){
+  var job=findJob(id); if(!job) return;
+  var amt=num(document.getElementById('pay-amt').value);
+  if(amt<=0){ toast('Enter an amount'); return; }
+  job.payments.push({ type:'Balance', amount:amt, date:document.getElementById('pay-date').value||todayISO(), method:document.getElementById('pay-method').value });
+  save('ld_jobs', jobs); toast('Payment recorded'); openJob(id); renderJobs();
+}
+function payFull(id, bal){
+  var job=findJob(id); if(!job || bal<=0) return;
+  job.payments.push({ type:'Balance', amount:bal, date:todayISO(), method:document.getElementById('pay-method')?document.getElementById('pay-method').value:'Cash' });
+  save('ld_jobs', jobs); toast('Marked paid in full'); openJob(id); renderJobs();
+}
+function deleteJob(id){
+  if(!confirm('Delete this job? This cannot be undone.')) return;
+  for(var i=0;i<jobs.length;i++){ if(jobs[i].id===id){ jobs.splice(i,1); break; } }
+  save('ld_jobs', jobs); closeModal(); renderJobs(); toast('Job deleted');
+}
+
+/* ---------- receipt document ---------- */
+function showReceipt(id){
+  var job=findJob(id); if(!job) return;
+  var t=computeTotals(job.items, job.disc, job.taxRate, job.payments);
+  var st=statusOf(t);
+  var p=profile;
+  var contact=[];
+  if(p.phone) contact.push(esc(p.phone));
+  if(p.email) contact.push(esc(p.email));
+  if(p.addr) contact.push(esc(p.addr));
+
+  var h='<div class="receipt" id="receipt-doc">';
+  h+='<div class="r-head"><div>';
+  h+='<div class="r-biz">'+esc(p.biz)+'</div>';
+  h+='<div class="r-owner">'+(p.owner?esc(p.owner)+'<br>':'')+contact.join(' &middot; ')+'</div>';
+  h+='</div><div class="r-meta"><div class="word">Receipt</div><div style="margin-top:6px">No. '+esc(job.receiptNo)+'</div><div>Issued '+prettyDate(job.createdAt)+'</div></div></div>';
+
+  h+='<div class="r-parties">';
+  h+='<div class="blk"><div class="lbl">Billed to</div><strong>'+esc(job.client.name)+'</strong>'+(job.client.phone?'<br>'+esc(job.client.phone):'')+(job.client.email?'<br>'+esc(job.client.email):'')+'</div>';
+  h+='<div class="blk" style="text-align:right"><div class="lbl">Event</div>'+esc(job.eventType)+(job.eventDate?'<br>'+prettyDate(job.eventDate):'')+'</div>';
+  h+='</div>';
+
+  h+='<table class="r-items"><thead><tr><th>Description</th><th class="num">Qty</th><th class="num">Unit</th><th class="num">Amount</th></tr></thead><tbody>';
+  for(var i=0;i<job.items.length;i++){ var it=job.items[i];
+    h+='<tr><td>'+esc(it.desc)+'</td><td class="num">'+esc(it.qty)+'</td><td class="num">'+money(it.price)+'</td><td class="num">'+money(num(it.qty)*num(it.price))+'</td></tr>';
+  }
+  h+='</tbody></table>';
+
+  h+='<div class="r-tot">';
+  h+='<div class="row"><span>Subtotal</span><span>'+money(t.sub)+'</span></div>';
+  if(t.disc>0) h+='<div class="row"><span>Discount</span><span>-'+money(t.disc)+'</span></div>';
+  if(t.tax>0) h+='<div class="row"><span>Tax</span><span>'+money(t.tax)+'</span></div>';
+  h+='<div class="row tot"><span>Total</span><span>'+money(t.total)+'</span></div>';
+  h+='<div class="row"><span>Paid</span><span>-'+money(t.paid)+'</span></div>';
+  if(st==='Paid in full'){ h+='<div class="row settled"><span>Balance</span><span>Paid in full</span></div>'; }
+  else { h+='<div class="row due"><span>Balance due</span><span>'+money(t.bal)+'</span></div>'; }
+  h+='</div>';
+
+  if(job.payments.length){
+    h+='<div class="r-pay"><div class="lbl">Payment history</div><table><tbody>';
+    for(i=0;i<job.payments.length;i++){ var pay=job.payments[i];
+      h+='<tr><td>'+esc(pay.type)+'</td><td>'+prettyDate(pay.date)+'</td><td>'+esc(pay.method)+'</td><td style="text-align:right;font-weight:600">'+money(pay.amount)+'</td></tr>';
+    }
+    h+='</tbody></table></div>';
+  }
+
+  h+='<div class="r-foot"><div class="ty">'+esc(p.ty)+'</div>';
+  if(st==='Paid in full') h+='<div><span class="stamp">Paid in full</span></div>';
+  if(p.note) h+='<div class="note">'+esc(p.note)+'</div>';
+  h+='</div>';
+
+  h+='</div>'; // receipt
+
+  h+='<div class="no-print" style="display:flex;gap:8px;margin-top:18px">';
+  h+='<button class="btn" onclick="window.print()">Print / Save PDF</button>';
+  h+='<button class="btn ghost" onclick="openJob('+job.id+')">Back</button>';
+  h+='</div>';
+
+  document.getElementById('modal-title').textContent='Receipt '+job.receiptNo;
+  document.getElementById('modal-body').innerHTML=h;
+  document.getElementById('scrim').className='scrim on';
+}
+
+function closeModal(){ document.getElementById('scrim').className='scrim'; }
+document.getElementById('scrim').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
+
+/* ---------- settings ---------- */
+function fillSettings(){
+  document.getElementById('s-biz').value=profile.biz;
+  document.getElementById('s-owner').value=profile.owner;
+  document.getElementById('s-phone').value=profile.phone;
+  document.getElementById('s-email').value=profile.email;
+  document.getElementById('s-addr').value=profile.addr;
+  document.getElementById('s-tag').value=profile.tag;
+  document.getElementById('s-cur').value=profile.cur;
+  document.getElementById('s-prefix').value=profile.prefix;
+  document.getElementById('s-next').value=profile.next;
+  document.getElementById('s-ty').value=profile.ty;
+  document.getElementById('s-note').value=profile.note;
+}
+function saveProfile(){
+  profile.biz=document.getElementById('s-biz').value.trim()||'Loise Derival';
+  profile.owner=document.getElementById('s-owner').value.trim();
+  profile.phone=document.getElementById('s-phone').value.trim();
+  profile.email=document.getElementById('s-email').value.trim();
+  profile.addr=document.getElementById('s-addr').value.trim();
+  profile.tag=document.getElementById('s-tag').value.trim();
+  profile.cur=document.getElementById('s-cur').value.trim()||'$';
+  profile.prefix=document.getElementById('s-prefix').value.trim();
+  var n=parseInt(document.getElementById('s-next').value,10); if(!isNaN(n)&&n>0) profile.next=n;
+  profile.ty=document.getElementById('s-ty').value.trim();
+  profile.note=document.getElementById('s-note').value.trim();
+  save('ld_profile', profile);
+  applyMast();
+  toast('Business info saved');
+}
+function applyMast(){
+  document.getElementById('mast-name').textContent=profile.biz;
+  document.getElementById('mast-tag').innerHTML=esc(profile.tag);
+}
+
+/* ---------- boot ---------- */
+applyMast();
+renderJobs();
+</script>
+</body>
+</html>
