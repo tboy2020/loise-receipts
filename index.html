@@ -851,6 +851,15 @@ function periodLabel(period){
   return 'All time';
 }
 
+function incomeInPeriod(period){
+  var total=0, i, j;
+  for(i=0;i<jobs.length;i++){
+    var pays=jobs[i].payments||[];
+    for(j=0;j<pays.length;j++){ if(inPeriod(pays[j].date, period)) total+=num(pays[j].amount); }
+  }
+  return total;
+}
+
 function renderExpenses(){
   var period=document.getElementById('e-period').value;
   var i, total=0, cats={};
@@ -862,10 +871,22 @@ function renderExpenses(){
     cats[ex.category]=(cats[ex.category]||0)+num(ex.amount);
     rows.push(ex);
   }
-  // summary
-  var s='<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">';
-  s+='<span style="color:var(--muted);font-size:13px">'+esc(periodLabel(period))+'</span>';
-  s+='<span style="font-family:\'Fraunces\',serif;font-weight:600;color:var(--rose);font-size:26px">'+money(total)+'</span></div>';
+  var income=incomeInPeriod(period);
+  var net=income-total;
+
+  // profit panel
+  var s='<div style="color:var(--muted);font-size:13px;margin-bottom:10px">'+esc(periodLabel(period))+'</div>';
+  s+='<div style="background:var(--paper-2);border-radius:12px;padding:14px">';
+  s+='<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:14.5px"><span style="color:var(--muted)">Money in</span><span style="font-weight:600;font-variant-numeric:tabular-nums;color:var(--ok)">'+money(income)+'</span></div>';
+  s+='<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:14.5px"><span style="color:var(--muted)">Money out</span><span style="font-weight:600;font-variant-numeric:tabular-nums;color:var(--due)">'+money(total)+'</span></div>';
+  s+='<div style="display:flex;justify-content:space-between;padding:9px 0 2px;margin-top:6px;border-top:1px solid var(--line);align-items:baseline">';
+  s+='<span style="font-weight:700;color:var(--garden)">Net profit</span>';
+  s+='<span style="font-family:\'Fraunces\',serif;font-weight:600;font-size:24px;font-variant-numeric:tabular-nums;color:'+(net>=0?'var(--ok)':'var(--due)')+'">'+money(net)+'</span></div>';
+  s+='</div>';
+
+  s+='<div style="display:flex;justify-content:space-between;align-items:baseline;margin:16px 0 4px">';
+  s+='<span style="color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.4px;font-weight:600">Expenses by category</span>';
+  s+='<span style="font-weight:600;color:var(--rose);font-variant-numeric:tabular-nums">'+money(total)+'</span></div>';
   var catKeys=[]; for(var k in cats){ if(cats.hasOwnProperty(k)) catKeys.push(k); }
   catKeys.sort(function(a,b){ return cats[b]-cats[a]; });
   if(catKeys.length){
