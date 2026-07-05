@@ -207,6 +207,7 @@
   <nav class="tabs">
     <button class="tab active" data-view="jobs" onclick="go('jobs')">Jobs</button>
     <button class="tab" data-view="new" onclick="newJob()">New job</button>
+    <button class="tab" data-view="expenses" onclick="go('expenses')">Expenses</button>
     <button class="tab" data-view="settings" onclick="go('settings')">Business info</button>
   </nav>
 
@@ -315,6 +316,51 @@
       </div>
     </div>
   </section>
+
+  <!-- EXPENSES -->
+  <section id="view-expenses" style="display:none">
+    <div class="card">
+      <h2 class="sec">Add an expense</h2>
+      <p class="hint">Log what you spend on supplies, flowers, food, gas and helpers. Totals add up below.</p>
+      <div class="grid g3">
+        <div class="field"><label>Amount</label><input id="e-amt" type="number" min="0" step="0.01" placeholder="0.00"></div>
+        <div class="field"><label>Date</label><input id="e-date" type="date"></div>
+        <div class="field"><label>Category</label>
+          <select id="e-cat">
+            <option>Flowers &amp; materials</option><option>Food</option><option>Rentals</option>
+            <option>Packaging</option><option>Delivery / gas</option><option>Helpers</option>
+            <option>Fees</option><option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid g2" style="margin-top:14px">
+        <div class="field"><label>Note (optional)</label><input id="e-note" placeholder="e.g. roses from the market"></div>
+        <div class="field"><label>For a client (optional)</label><select id="e-job"></select></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn rose" onclick="addExpense()">Add expense</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+        <h2 class="sec" style="margin:0">Totals</h2>
+        <select id="e-period" onchange="renderExpenses()" style="max-width:160px">
+          <option value="day">Today</option>
+          <option value="week">This week</option>
+          <option value="month" selected>This month</option>
+          <option value="year">This year</option>
+          <option value="all">All time</option>
+        </select>
+      </div>
+      <div id="exp-summary" style="margin-top:14px"></div>
+    </div>
+
+    <div class="card">
+      <h2 class="sec">Expense log</h2>
+      <div id="exp-list"></div>
+    </div>
+  </section>
 </div>
 
 <!-- MODAL -->
@@ -345,6 +391,7 @@ var DEFAULT_PROFILE = {
 
 var profile = load('ld_profile', null) || DEFAULT_PROFILE;
 var jobs = load('ld_jobs', []);
+var expenses = load('ld_expenses', []);
 var editingId = null;
 
 /* ---------- utils ---------- */
@@ -386,9 +433,11 @@ function go(view){
   document.getElementById('view-jobs').style.display = view==='jobs'?'':'none';
   document.getElementById('view-new').style.display = view==='new'?'':'none';
   document.getElementById('view-settings').style.display = view==='settings'?'':'none';
+  document.getElementById('view-expenses').style.display = view==='expenses'?'':'none';
   var tabs=document.querySelectorAll('.tab'); for(var i=0;i<tabs.length;i++){ tabs[i].className = tabs[i].getAttribute('data-view')===view?'tab active':'tab'; }
   if(view==='jobs') renderJobs();
   if(view==='settings') fillSettings();
+  if(view==='expenses') openExpenses();
   window.scrollTo(0,0);
 }
 
@@ -735,6 +784,120 @@ function saveProfile(){
 function applyMast(){
   document.getElementById('mast-name').textContent=profile.biz;
   document.getElementById('mast-tag').innerHTML=esc(profile.tag);
+}
+
+/* ---------- expenses ---------- */
+function openExpenses(){
+  document.getElementById('e-date').value=todayISO();
+  document.getElementById('e-amt').value='';
+  document.getElementById('e-note').value='';
+  // populate client dropdown
+  var sel=document.getElementById('e-job');
+  var html='<option value="">\u2014 none (general) \u2014</option>';
+  for(var i=0;i<jobs.length;i++){ html+='<option value="'+jobs[i].id+'">'+esc(jobs[i].client.name)+' &middot; '+esc(jobs[i].receiptNo)+'</option>'; }
+  sel.innerHTML=html;
+  renderExpenses();
+}
+
+function addExpense(){
+  var amt=num(document.getElementById('e-amt').value);
+  if(amt<=0){ toast('Enter an amount'); document.getElementById('e-amt').focus(); return; }
+  var jobId=document.getElementById('e-job').value;
+  expenses.unshift({
+    id:Date.now(),
+    amount:amt,
+    date:document.getElementById('e-date').value||todayISO(),
+    category:document.getElementById('e-cat').value,
+    note:document.getElementById('e-note').value.trim(),
+    jobId:jobId?parseInt(jobId,10):null
+  });
+  save('ld_expenses', expenses);
+  toast('Expense added');
+  document.getElementById('e-amt').value='';
+  document.getElementById('e-note').value='';
+  renderExpenses();
+}
+
+function deleteExpense(id){
+  if(!confirm('Delete this expense?')) return;
+  for(var i=0;i<expenses.length;i++){ if(expenses[i].id===id){ expenses.splice(i,1); break; } }
+  save('ld_expenses', expenses); renderExpenses(); toast('Expense deleted');
+}
+
+function inPeriod(iso, period){
+  if(period==='all') return true;
+  if(!iso) return false;
+  var p=(''+iso).split('-'); if(p.length!==3) return false;
+  var d=new Date(parseInt(p[0],10), parseInt(p[1],10)-1, parseInt(p[2],10));
+  var now=new Date(); var today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  if(period==='day') return d.getTime()===today.getTime();
+  if(period==='year') return d.getFullYear()===today.getFullYear();
+  if(period==='month') return d.getFullYear()===today.getFullYear() && d.getMonth()===today.getMonth();
+  if(period==='week'){
+    var start=new Date(today); start.setDate(today.getDate()-today.getDay()); // Sunday start
+    var end=new Date(start); end.setDate(start.getDate()+7);
+    return d.getTime()>=start.getTime() && d.getTime()<end.getTime();
+  }
+  return true;
+}
+
+function periodLabel(period){
+  var mo=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var now=new Date();
+  if(period==='day') return prettyDate(todayISO());
+  if(period==='week') return 'This week';
+  if(period==='month') return mo[now.getMonth()]+' '+now.getFullYear();
+  if(period==='year') return ''+now.getFullYear();
+  return 'All time';
+}
+
+function renderExpenses(){
+  var period=document.getElementById('e-period').value;
+  var i, total=0, cats={};
+  var rows=[];
+  for(i=0;i<expenses.length;i++){
+    var ex=expenses[i];
+    if(!inPeriod(ex.date, period)) continue;
+    total+=num(ex.amount);
+    cats[ex.category]=(cats[ex.category]||0)+num(ex.amount);
+    rows.push(ex);
+  }
+  // summary
+  var s='<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">';
+  s+='<span style="color:var(--muted);font-size:13px">'+esc(periodLabel(period))+'</span>';
+  s+='<span style="font-family:\'Fraunces\',serif;font-weight:600;color:var(--rose);font-size:26px">'+money(total)+'</span></div>';
+  var catKeys=[]; for(var k in cats){ if(cats.hasOwnProperty(k)) catKeys.push(k); }
+  catKeys.sort(function(a,b){ return cats[b]-cats[a]; });
+  if(catKeys.length){
+    s+='<div style="border-top:1px solid var(--line);margin-top:8px;padding-top:10px">';
+    for(i=0;i<catKeys.length;i++){
+      var pct=total>0?Math.round(cats[catKeys[i]]/total*100):0;
+      s+='<div style="margin:8px 0">';
+      s+='<div style="display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:4px"><span>'+esc(catKeys[i])+'</span><span style="font-weight:600;font-variant-numeric:tabular-nums">'+money(cats[catKeys[i]])+'</span></div>';
+      s+='<div style="height:6px;background:var(--paper-2);border-radius:999px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:var(--garden-soft)"></div></div>';
+      s+='</div>';
+    }
+    s+='</div>';
+  } else {
+    s+='<div class="empty" style="padding:20px 10px">No expenses in this period.</div>';
+  }
+  document.getElementById('exp-summary').innerHTML=s;
+
+  // full log (all expenses, newest first)
+  var L='';
+  if(expenses.length===0){ L='<div class="empty">No expenses logged yet.</div>'; }
+  for(i=0;i<expenses.length;i++){
+    var e=expenses[i];
+    var jobName='';
+    if(e.jobId){ var j=findJob(e.jobId); if(j) jobName=' &middot; '+esc(j.client.name); }
+    L+='<div class="job" style="cursor:default">';
+    L+='<div class="jmain"><div class="jname" style="font-size:14.5px">'+esc(e.category)+'</div>';
+    L+='<div class="jmeta">'+prettyDate(e.date)+(e.note?' &middot; '+esc(e.note):'')+jobName+'</div></div>';
+    L+='<div class="jnums"><div class="jtotal">'+money(e.amount)+'</div></div>';
+    L+='<button class="del" title="Delete" onclick="deleteExpense('+e.id+')" style="width:34px">&times;</button>';
+    L+='</div>';
+  }
+  document.getElementById('exp-list').innerHTML=L;
 }
 
 /* ---------- boot ---------- */
